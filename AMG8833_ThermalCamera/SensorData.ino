@@ -1,29 +1,30 @@
 // AMG8833 Sensor data processing
+// Note: where possible the F() macro is used to limit ram usage.
 
 //----------------------------------------------------------------------------
 void InitAMG8833()
 {
-  sensor.initI2C();
-  statusCode = sensor.resetFlagsAndSettings();
-  if(statusCode != 0)  
+  sensor.initI2C(); // init I2C
+  statusCode = sensor.resetFlagsAndSettings(); // reset sensor
+  if(statusCode != 0) // if error show in monitor  
     Panel.sendf(MonitorLog, F("reset status %s"), sensor.getErrorDescription(statusCode));
-  statusCode = sensor.setMode(DEVICE_MODE::SLEEP);
-  if(statusCode != 0) 
-    Panel.sendf(MonitorLog, F("sleep mode status %s"), sensor.getErrorDescription(statusCode));
-  statusCode = sensor.setFPSMode(FPS_MODE::FPS_10);
-  if(statusCode != 0) 
+  statusCode = sensor.setFPSMode(FPS_MODE::FPS_10); // 10fps as default
+  if(statusCode != 0) // if error show in monitor 
     Panel.sendf(MonitorLog, F("frame speed status %s"), sensor.getErrorDescription(statusCode));
+  statusCode = sensor.setMode(DEVICE_MODE::SLEEP); // set sleep mode
+  if(statusCode != 0) // if error show in monitor 
+    Panel.sendf(MonitorLog, F("sleep mode status %s"), sensor.getErrorDescription(statusCode));
 }
 
 //----------------------------------------------------------------------------
 void SensorData()
 {
   statusCode = sensor.updateThermistorTemperature(); // read thermistor data
-  if(statusCode != 0) 
+  if(statusCode != 0) // if error show in monitor 
     Panel.sendf(MonitorLog, F("thermistor update status %s"), sensor.getErrorDescription(statusCode));
 
   statusCode = sensor.updatePixelMatrix(); // reads sensor matrix
-  if(statusCode != 0) 
+  if(statusCode != 0) // if error show in monitor
     Panel.sendf(MonitorLog, F("matrix update status %s"), sensor.getErrorDescription(statusCode));
  
   hightemp = -500.0; // set hightemp low out of range
@@ -32,11 +33,14 @@ void SensorData()
   if(Raw)
     OutputRawGrid(); // raw (8x8) pixel output
   else
-    OutputInterpolatedGrid(); // interpolate to 
+    OutputInterpolatedGrid(); // interpolate to 29 x 29 pixels
       
-  Panel.sendf(GraphCaption_1, F("high %s°C"), _FString(hightemp,4,2));
-  Panel.sendf(GraphCaption_2, F("low %s°C"), _FString(lowtemp,4,2));
   Panel.sendf(Display_1, F("thermistor ref. %s°C"), _FString(sensor.thermistorTemperature,4,2));
+  Panel.sendf(GraphCaption_1, F("high %s°C"), _FString(hightemp,4,2));
+  Panel.sendf(GraphCaption_2, F("low %s°C"), _FString(lowtemp,5,2));
+  Panel.send(GraphText, _Point(130,45));
+  Panel.sendf(GraphText, F("◯ %s°C"), _FString(centertemp,4,2));
+  
 }
 
 //----------------------------------------------------------------------------
@@ -47,7 +51,7 @@ void OutputRawGrid()
   const int hoffset = ((255 - (16 * 8)) / 2) + 8 + 35; // calculate image position
   const int voffset = ((220 - (16 * 8)) / 2) + 8; 
 
-  Panel.send(GraphDrawPixel, F("$16PX"));
+  Panel.send(GraphDrawPixel, F("$16PX")); // set 16 x 16 pixel size
 
   for (int y = 0; y < 8; y++)
   {
@@ -56,8 +60,10 @@ void OutputRawGrid()
       SetColor(sensor.pixelMatrix[x][y]); // set color to scale
       if(sensor.pixelMatrix[x][y] > hightemp) hightemp = sensor.pixelMatrix[y][x]; // find high temp
       if(sensor.pixelMatrix[x][y] < lowtemp) lowtemp = sensor.pixelMatrix[y][x]; // find low temp
+      if(x==4 && y==3)centertemp = sensor.pixelMatrix[x][y]; //find center temp
        
       Panel.send(GraphDrawPixel, _Point(byte(hoffset + (y * 16)), byte(voffset + (x * 16)))); // write pixel, flip x<>y to turn 90 deg.
+      if((x==3||x==4) && (y==3||y==4)) Panel.send(GraphDrawCircle, _Circle(154, 118, 5));
     }
   }
 }
@@ -102,9 +108,11 @@ void OutputInterpolatedGrid()
       {
         for(int iy = 0; iy < 5; iy++)
         {
-          SetColor(InterpolatePixel[ix][iy]);
+          SetColor(InterpolatePixel[ix][iy]); // find the color for this pixel
           Panel.send(GraphDrawPixel, _Point(byte(hoffset + (y * 16) + (iy * 4)), byte(voffset + (x * 16) + (ix * 4)))); // write pixel, flip x<>y to turn 90 deg.
-        }
+          if(x==3 && y==3 && ix==2 && iy==2) centertemp = InterpolatePixel[ix][iy]; // find center temp
+          if((x==3||x==4) && (y==3||y==4)) Panel.send(GraphDrawCircle, _Circle(162, 114, 5)); // display center circle
+        } 
       }
       if(sensor.pixelMatrix[x][y] > hightemp) hightemp = sensor.pixelMatrix[y][x]; // find high temp
       if(sensor.pixelMatrix[x][y] < lowtemp) lowtemp = sensor.pixelMatrix[y][x]; // find low temp

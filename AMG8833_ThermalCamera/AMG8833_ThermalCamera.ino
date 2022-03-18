@@ -4,7 +4,8 @@
 // 
 // Uses Melopero_AMG8833 library - https://github.com/melopero/Melopero_AMG8833 (install via IDE)
 // Uses VirtualPanel - https://github.com/JaapDanielse/VirtualPanel (install via instructions)
-
+//
+// V1.0 18-03-2022 Initial version - Jaap Daniëlse
 
 #include <Melopero_AMG8833.h>
 #include "VirtualPanel.h"
@@ -18,6 +19,7 @@ int   statusCode = 0; // AGM8833 status
 float InterpolatePixel[5][5]; // interpoation buffer
 float hightemp = 0.0; // highest temp in frame
 float lowtemp  = 0.0; // ;lowest temp in frame
+float centertemp = 0.0; // center of frame temp.
 float ScaleTop = 25.0; // color scale top
 float ScaleBottom = 15.0; // color scale botom
 float ScaleStep = 0; // color scale step size

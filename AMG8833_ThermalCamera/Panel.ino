@@ -1,4 +1,5 @@
 // VirtualPanel control
+// Note: where possible the F() macro is used to limit ram usage.
 
 //----------------------------------------------------------------------------
 void PanelCallback(vp_channel event) 
@@ -115,10 +116,10 @@ void TempScale()
   // output temperature - color scale
   ScaleStep = (ScaleTop - ScaleBottom) / 6; // calculate scale step (8 colors = 6 steps)
   
-  Panel.send(Graph, F("$CLEAR"));
-  Panel.send(GraphDrawPixel, F("$16PX")); // 16 x 16 pixel size
+  Panel.send(Graph, F("$CLEAR")); // clear display
+  Panel.send(GraphDrawPixel, F("$16PX")); // set 16 x 16 pixel size
   
-  Panel.send(GraphDrawPixel, F("$DBLUE")); // set pixel color
+  Panel.send(GraphDrawPixel, F("$DBLUE")); // set pixel color for all below bottom of scale
   Panel.send(GraphDrawPixel, _Point(30,54)); // write pixel
  
   Panel.send(GraphText, _Point(40,70)); // set text point
@@ -153,7 +154,7 @@ void TempScale()
     
   Panel.send(GraphText, _Point(40,166));
   Panel.sendf(GraphText, "%s°C", _FString(ScaleBottom + (ScaleStep * 6),3,1));
-  Panel.send(GraphDrawPixel, F("$RED"));  
+  Panel.send(GraphDrawPixel, F("$RED"));  // for all above top of scale
   Panel.send(GraphDrawPixel, _Point(30,166));
 }
 
