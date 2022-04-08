@@ -153,8 +153,8 @@ void InterpolateGrid()
       }
       if(sensor.pixelMatrix[x][y] > hightemp) hightemp = sensor.pixelMatrix[x][y]; // find high temp
       if(sensor.pixelMatrix[x][y] < lowtemp) lowtemp = sensor.pixelMatrix[x][y]; // find low temp
+      if(Panel.delay(0, false)) return;
     }
-    if(Panel.delay(1, false)) return;
   }
 }
 
